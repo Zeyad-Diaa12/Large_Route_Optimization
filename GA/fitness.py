@@ -12,6 +12,7 @@ class Fitness():
         self.max_stops = self.truck.max_stops
         self.truck_id = self.truck.truck_id
 
+        self.count_stops = 0
         self.weight = 0.0
         self.area = 0.0
         self.cost_per_km = 0.0
@@ -42,9 +43,8 @@ class Fitness():
         self._calculate_time_diff()
 
         for i in range(len(self.genome)-1):
-            count_stops = 0
             if i == 0:
-                count_stops+=1
+                self.count_stops+=1
                 current_city = self.source
                 next_city = mapped_orders[self.genome[i]][1]
 
@@ -54,7 +54,7 @@ class Fitness():
                 modified_time = self.current_time + timedelta(hours=time_taken)
                 self.current_time = modified_time
 
-                if count_stops>self.max_stops:
+                if self.count_stops>self.max_stops:
                     self.stops_violation += 100
                 if modified_time > datetime.strptime(mapped_orders[self.genome[i]][5],'%Y-%m-%d %H:%M:%S'):
                     self.time_violation += 100
@@ -66,14 +66,14 @@ class Fitness():
                     self.cost_per_km += 0.0
                     self.time_violation += 0
                 else:
-                    count_stops+=1
+                    self.count_stops+=1
                     self.cost_per_km += distance_matrix[current_city][next_city]['cost']
 
                     time_taken = distance_matrix[current_city][next_city]['time']
                     modified_time = self.current_time + timedelta(hours=time_taken)
                     self.current_time = modified_time
 
-                    if count_stops>self.max_stops:
+                    if self.count_stops>self.max_stops:
                         self.stops_violation += 100
                     if modified_time > datetime.strptime(mapped_orders[self.genome[i]][5],'%Y-%m-%d %H:%M:%S'):
                         self.time_violation += 100
