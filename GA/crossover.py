@@ -13,8 +13,7 @@ def order_crossover(parent1, parent2):
         tuple: Two offspring resulting from order crossover.
 
     Order crossover (OX) is a genetic operator used in genetic algorithms for combining two parent 
-    chromosomes to produce two offspring. It mimics the natural genetic process of crossover in 
-    biological organisms.
+    chromosomes to produce two offspring.
 
     The function follows these steps:
     1. Choose two random points for crossover.
@@ -79,8 +78,7 @@ def edge_crossover(parent1, parent2):
         list: Offspring resulting from edge crossover.
 
     Edge Recombination Crossover (ERX) is a genetic operator used in genetic algorithms for combining 
-    two parent chromosomes to produce offspring. It aims to maintain connectivity between genes in 
-    chromosomes during crossover.
+    two parent chromosomes to produce offspring. 
 
     The function follows these steps:
     1. Create adjacency lists for both parents to represent the connections between genes.

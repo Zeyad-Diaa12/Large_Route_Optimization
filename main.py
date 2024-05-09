@@ -7,6 +7,7 @@ from plotly.subplots import make_subplots
 import folium
 from streamlit_folium import folium_static
 import networkx as nx
+import datetime as dt
 
 import GA
 from GA.genome import Chromosome
@@ -17,7 +18,7 @@ from GA.crossover import order_crossover, edge_crossover
 from GA.mutation import swap_mutation, scramble_mutation, insertion_mutation, inversion_mutation,random_resetting_mutation
 from GA.selection import tournament_selection, exponential_rank_selection
 from GA.elitism import elitism_survivor_selection
-from GA.load_data import cities_lat_lon, mapped_orders
+from GA.load_data import mapped_orders
 
 
 def run_ga_order_crossover(population_size, candidate_len, generations, crossover_rate, mutation_rate, crossover_fn, mutation_fn, selection_fn, survivor_mechanism,max_stops):
@@ -26,7 +27,7 @@ def run_ga_order_crossover(population_size, candidate_len, generations, crossove
     generation = []
     average_fitness_in_each_generation = []
     best_population = []
-    best_population_avg_fitness = 9999999999.9
+    best_population_avg_fitness = float('inf')
     best_solution = []
     best_solution_fitness = 0.0
 
@@ -36,9 +37,8 @@ def run_ga_order_crossover(population_size, candidate_len, generations, crossove
             candidate = Individual(candidate_len).individual
             fit = Fitness(candidate, truck)
             fit.get_fitness()
-            genome = Chromosome(candidate, fit.fitness, truck.truck_id)
             population.append(candidate)
-            fitness_values.append(genome.fitness)
+            fitness_values.append(fit.fitness)
 
     def crossover(parent1, parent2, crossover_rate, crossover_fn):
         if random.random() < crossover_rate:
@@ -62,7 +62,7 @@ def run_ga_order_crossover(population_size, candidate_len, generations, crossove
     fig.update_layout(title="Average Fitness Across Generations", xaxis_title="Generation", yaxis_title="Average Fitness")
 
     chart = st.plotly_chart(fig)
-
+    start_time = dt.datetime.now()
     for gen in range(generations):
         next_generation = []
         next_generation_fitness = []
@@ -124,6 +124,7 @@ def run_ga_order_crossover(population_size, candidate_len, generations, crossove
 
         fig.add_trace(go.Scatter(x=generation, y=average_fitness_in_each_generation, mode='lines+markers'), row=1, col=1)
         chart.plotly_chart(fig)
+    st.write(f"Time taken to find best solution: {dt.datetime.now() - start_time}")
     return best_solution,best_solution_fitness,best_population,best_population_avg_fitness,generations,average_fitness_in_each_generation
 
 def run_ga_edge_crossover(population_size, candidate_len, generations, crossover_rate, mutation_rate, crossover_fn, mutation_fn, selection_fn, survivor_mechanism,max_stops):
@@ -132,7 +133,7 @@ def run_ga_edge_crossover(population_size, candidate_len, generations, crossover
     generation = []
     average_fitness_in_each_generation = []
     best_population = []
-    best_population_avg_fitness = 9999999999.9
+    best_population_avg_fitness = float('inf')
     best_solution = []
     best_solution_fitness = 0.0
 
@@ -142,9 +143,8 @@ def run_ga_edge_crossover(population_size, candidate_len, generations, crossover
             candidate = Individual(candidate_len).individual
             fit = Fitness(candidate, truck)
             fit.get_fitness()
-            genome = Chromosome(candidate, fit.fitness, truck.truck_id)
-            population.append(genome.cand)
-            fitness_values.append(genome.fitness)
+            population.append(candidate)
+            fitness_values.append(fit.fitness)
 
     def crossover(parent1, parent2, crossover_rate, crossover_fn):
         if random.random() < crossover_rate:
@@ -169,6 +169,7 @@ def run_ga_edge_crossover(population_size, candidate_len, generations, crossover
 
     chart = st.plotly_chart(fig)
 
+    start_time = dt.datetime.now()
     for gen in range(generations):
         next_generation = []
         next_generation_fitness = []
@@ -227,6 +228,7 @@ def run_ga_edge_crossover(population_size, candidate_len, generations, crossover
 
         fig.add_trace(go.Scatter(x=generation, y=average_fitness_in_each_generation, mode='lines+markers'), row=1, col=1)
         chart.plotly_chart(fig)
+    st.write(f"Time taken to find best solution: {dt.datetime.now() - start_time}")
     return best_solution,best_solution_fitness,best_population,best_population_avg_fitness,generations,average_fitness_in_each_generation
 
 # User-defined hyperparameters (default values)
@@ -307,9 +309,16 @@ def visualize_best_solution(best_solution, main_point_city='61'):
 
     plt.title('Best Solution')
     plt.axis('off')  # Disable axis
-    plt.tight_layout()  # Adjust layout
     st.pyplot(plt)  # Display the plot in Streamlit
 
+def printData():
+    st.write(f"Population size :{len(best_population)}")
+    st.write(f"Best Average Fitness :{best_population_avg_fitness}")
+    st.write(f"Best Solution :{best_sol}")
+    st.write(f"Best Solution Fitness :{best_sol_fit}")
+
+# def outputTable(best_solution):
+    
 
 best_population = []
 best_population_avg_fitness=[]
@@ -319,15 +328,9 @@ average_fitness = []
 if st.button("Run GA"):
     if crossover_option == "Edge Crossover":
         best_sol,best_sol_fit,best_population,best_population_avg_fitness,genrations,average_fitness = run_ga_edge_crossover(population_size, candidate_len, num_generations, crossover_rate, mutation_rate, crossover_fn, mutation_fn, selection_fn, survivor_mechanism,max_stops)
-        st.write(f"Population size :{len(best_population)}")
-        st.write(f"Best Average Fitness :{best_population_avg_fitness}")
-        st.write(f"Best Solution :{best_sol}")
-        st.write(f"Best Solution Fitness :{best_sol_fit}")
+        printData()
         visualize_best_solution(best_sol)
     else:
         best_sol,best_sol_fit,best_population,best_population_avg_fitness,genrations,average_fitness = run_ga_order_crossover(population_size, candidate_len, num_generations, crossover_rate, mutation_rate, crossover_fn, mutation_fn, selection_fn, survivor_mechanism,max_stops)
-        st.write(f"Population size :{len(best_population)}")
-        st.write(f"Best Average Fitness :{best_population_avg_fitness}")
-        st.write(f"Best Solution :{best_sol}")
-        st.write(f"Best Solution Fitness :{best_sol_fit}")
+        printData()
         visualize_best_solution(best_sol)

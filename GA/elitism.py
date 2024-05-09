@@ -1,5 +1,5 @@
 
-def elitism_survivor_selection(population, offspring, fitness_values, offspring_fitness, num_elites=5):
+def elitism_survivor_selection(population, offspring, fitness_values, offspring_fitness, num_elites=30):
     """
     Perform Elitism Survivor Selection.
 
@@ -39,4 +39,5 @@ def elitism_survivor_selection(population, offspring, fitness_values, offspring_
     elites = [individual for individual, _ in sorted_combined[:num_elites]]
     
     return elites
+
 
