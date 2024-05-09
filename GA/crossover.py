@@ -2,7 +2,28 @@ from collections import defaultdict
 import random
 
 def order_crossover(parent1, parent2):
-    """Perform Order Crossover (OX) on two parent chromosomes."""
+    """
+    Perform Order Crossover (OX) on two parent chromosomes.
+
+    Args:
+        parent1 (list): The first parent chromosome.
+        parent2 (list): The second parent chromosome.
+
+    Returns:
+        tuple: Two offspring resulting from order crossover.
+
+    Order crossover (OX) is a genetic operator used in genetic algorithms for combining two parent 
+    chromosomes to produce two offspring. It mimics the natural genetic process of crossover in 
+    biological organisms.
+
+    The function follows these steps:
+    1. Choose two random points for crossover.
+    2. Initialize two offspring with the genetic material of the parents.
+    3. Copy a segment from parent1 to offspring1 and from parent2 to offspring2.
+    4. Create lists of elements not copied from parents for each offspring.
+    5. Fill in the remaining positions in the offspring with the remaining elements.
+    6. Return the resulting offspring.
+    """
     size = len(parent1)
     # Choose two random points for crossover
     cxpoint1 = random.randint(0, size - 1)
@@ -47,7 +68,30 @@ def order_crossover(parent1, parent2):
 
 
 def edge_crossover(parent1, parent2):
-    """Perform Edge Recombination Crossover (ERX) on two parent chromosomes."""
+    """
+    Perform Edge Recombination Crossover (ERX) on two parent chromosomes.
+
+    Args:
+        parent1 (list): The first parent chromosome.
+        parent2 (list): The second parent chromosome.
+
+    Returns:
+        list: Offspring resulting from edge crossover.
+
+    Edge Recombination Crossover (ERX) is a genetic operator used in genetic algorithms for combining 
+    two parent chromosomes to produce offspring. It aims to maintain connectivity between genes in 
+    chromosomes during crossover.
+
+    The function follows these steps:
+    1. Create adjacency lists for both parents to represent the connections between genes.
+    2. Initialize an empty list for the offspring.
+    3. Choose a random starting point as the current node.
+    4. Add the current node to the offspring and remove it from the adjacency lists.
+    5. Find the neighbors of the current node and select the one with the fewest edges.
+    6. Add the selected neighbor to the offspring and update adjacency lists accordingly.
+    7. Repeat steps 4-6 until all nodes are included in the offspring or termination conditions are met.
+    8. Return the resulting offspring.
+    """
     size = len(parent1)
     # Create adjacency lists for both parents
     adj_list1 = defaultdict(list)
