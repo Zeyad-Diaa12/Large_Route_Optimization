@@ -339,7 +339,6 @@ def printData():
         "Best Average Fitness": [best_population_avg_fitness],
         "Best Solution": [best_sol],
         "Best Solution Fitness": [best_sol_fit],
-        "Arrive Time": [total_time],
         "Area": [area],
         "Weight": [weight],
         "Stops": [stops],
@@ -357,13 +356,13 @@ def printData():
         ord = pd.DataFrame({
             "Order": [order],
             "Available Time": [all_orders[order]['Available_Time']],
-            "Arrival Time": [arrival_time[order]],
+            "Moving Time": [arrival_time[order]['move']],
+            "Arrival Time": [arrival_time[order]['arrive']],
             "Deadline": [all_orders[order]['Deadline']],
             "Source": [all_orders[order]['Source']],
             "Destination": [all_orders[order]['Destination']]
         })
         dfs.append(ord)
-
 # Concatenate all DataFrames into one DataFrame
     ord_df = pd.concat(dfs, ignore_index=True)
     st.write(ord_df)

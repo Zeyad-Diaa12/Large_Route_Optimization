@@ -77,25 +77,23 @@ class Fitness():
         moving_time = max(datetime_objects, key=lambda x: x)
         total_time = moving_time
         for i in range(len(chromosome)):
-            if i==len(chromosome)-1:
-                arrival_time[mapped_orders[chromosome[i]][0]] = total_time
-            else:
-                if i == 0:
-                    current_city = self.source
-                    next_city = mapped_orders[chromosome[i]][1]
+            if i == 0:
+                current_city = self.source
+                next_city = mapped_orders[chromosome[i]][1]
 
-                    time_taken = distance_matrix[current_city][next_city]['time']
-                    
-                    arrival_time[mapped_orders[chromosome[i]][0]] = total_time + timedelta(hours=time_taken)
+                time_taken = distance_matrix[current_city][next_city]['time']
+                total_time += timedelta(hours=time_taken)
+                arrival_time[mapped_orders[chromosome[i]][0]] = {'arrive':total_time,'move':moving_time}
+            else:
+                current_city = mapped_orders[chromosome[i-1]][1]
+                next_city = mapped_orders[chromosome[i]][1]
+                if current_city == next_city:
+                    arrival_time[mapped_orders[chromosome[i]][0]] = {'arrive':total_time,'move':moving_time}
                 else:
-                    current_city = mapped_orders[chromosome[i]][1]
-                    next_city = mapped_orders[chromosome[i+1]][1]
-                    if current_city == next_city:
-                        arrival_time[mapped_orders[chromosome[i]][0]] = total_time
-                    else:
-                        time_taken = distance_matrix[current_city][next_city]['time']
-                        
-                        arrival_time[mapped_orders[chromosome[i]][0]] = total_time + timedelta(hours=time_taken)
+                    time_taken = distance_matrix[current_city][next_city]['time']
+                    total_time += timedelta(hours=time_taken)
+                    arrival_time[mapped_orders[chromosome[i]][0]] = {'arrive':total_time,'move':moving_time}
+
         return arrival_time
     def get_fitness(self):
         """
@@ -122,7 +120,7 @@ class Fitness():
                 if self.count_stops > self.max_stops:
                     self.stops_violation += 100
                 if modified_time > datetime.strptime(mapped_orders[self.genome[i]][5],'%Y-%m-%d %H:%M:%S'):
-                    self.time_violation += 100
+                    self.time_violation += 1000
             else:
                 current_city = mapped_orders[self.genome[i]][1]
                 next_city = mapped_orders[self.genome[i + 1]][1]
@@ -141,21 +139,21 @@ class Fitness():
                     if self.count_stops > self.max_stops:
                         self.stops_violation += 100
                     if modified_time > datetime.strptime(mapped_orders[self.genome[i]][5],'%Y-%m-%d %H:%M:%S'):
-                        self.time_violation += 100
+                        self.time_violation += 1000
 
         for rep in self.genome:
             self.weight += mapped_orders[rep][3]
             self.area += mapped_orders[rep][2]
 
         if self.weight > self.truck.truck_weight:
-            self.fitness += (self.weight - self.truck.truck_weight) * 0.4
+            self.fitness += (self.weight - self.truck.truck_weight) * 0.6
 
         if self.area > self.truck.truck_area:
-            self.fitness += (self.area - self.truck.truck_area) * 0.4
+            self.fitness += (self.area - self.truck.truck_area) * 0.6
         
         if self.diff_time > self.load_time:
             self.fitness += self.diff_time - self.load_time
 
-        self.fitness = (self.time_violation * 0.4) + (self.cost_per_km * 0.1) + (self.stops_violation * 0.1)
+        self.fitness = (self.time_violation * 0.8) + (self.cost_per_km * 0.1) + (self.stops_violation * 0.1)
 
         return self.fitness
