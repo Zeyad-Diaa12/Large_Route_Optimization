@@ -1,6 +1,8 @@
 import random
 import numpy as np
 
+random.seed(42)
+
 def exponential_rank_selection(population, fitness_values, selection_pressure=1.1):
   """
   This function implements Exponential Rank Selection, an algorithm used in Evolutionary Algorithms (EA) 
@@ -19,7 +21,6 @@ def exponential_rank_selection(population, fitness_values, selection_pressure=1.
   Returns:
       individual: A single individual (solution) selected from the population for reproduction.
   """
-
   # Sort together individuals and their corresponding fitness values based on fitness (ascending order)
   sorted_population = sorted(zip(population, fitness_values), key=lambda x: x[1])
   ranks = range(1, len(sorted_population) + 1)  # Assign ranks (from 1 to population size) to each individual based on its position in the sorted list (better fitness -> lower rank)
@@ -50,7 +51,6 @@ def tournament_selection(population, fitness_values, tournament_size=20):
   Returns:
       individual: The fittest individual selected through the tournaments.
   """
-
   selected = None
   # Perform multiple mini-tournaments (number of tournaments = tournament_size)
   for _ in range(tournament_size):

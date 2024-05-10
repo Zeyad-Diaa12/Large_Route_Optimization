@@ -1,6 +1,8 @@
 from collections import defaultdict
 import random
 
+random.seed(42)
+
 def order_crossover(parent1, parent2):
     """
     Perform Order Crossover (OX) on two parent chromosomes.

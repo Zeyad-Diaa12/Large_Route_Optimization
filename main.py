@@ -11,7 +11,6 @@ import datetime as dt
 import pandas as pd
 
 import GA
-# from GA.genome import Chromosome
 from GA.fitness import Fitness
 from GA.individual import Individual
 from GA.truck import Truck
@@ -21,6 +20,7 @@ from GA.selection import tournament_selection, exponential_rank_selection
 from GA.elitism import elitism_survivor_selection
 from GA.load_data import mapped_orders,all_orders
 
+random.seed(42)
 
 def run_ga_order_crossover(population_size, candidate_len, generations, crossover_rate, mutation_rate, crossover_fn, mutation_fn, selection_fn, survivor_mechanism,max_stops):
     population = []
@@ -127,6 +127,7 @@ def run_ga_order_crossover(population_size, candidate_len, generations, crossove
         chart.plotly_chart(fig)
     st.write(f"Time taken to find best solution: {dt.datetime.now() - start_time}")
     return best_solution,best_solution_fitness,best_population,best_population_avg_fitness,generations,average_fitness_in_each_generation
+
 
 def run_ga_edge_crossover(population_size, candidate_len, generations, crossover_rate, mutation_rate, crossover_fn, mutation_fn, selection_fn, survivor_mechanism,max_stops):
     population = []
@@ -239,6 +240,7 @@ crossover_rate = st.sidebar.number_input("Crossover Rate", min_value=0.0, max_va
 num_generations = st.sidebar.number_input("Number of Generations", min_value=30, max_value=1000, value=50)
 candidate_len = st.sidebar.number_input("Candidate Length", min_value=5, max_value=20, step=1, value=10)
 max_stops = st.sidebar.number_input("Max Stops", min_value=5, max_value=20, step=1, value=10)
+epochs = st.sidebar.number_input("Epochs",min_value=10,max_value=20,step=1,value=10)
 
 # Mapping between selection options and functions
 crossover_functions = {
@@ -315,12 +317,11 @@ def visualize_best_solution(best_solution, main_point_city='61'):
 def printData():
     datetime_objects = []
     for rep in best_sol:
-        datetime_objects.append(dt.datetime.strptime(mapped_orders[rep][5], '%Y-%m-%d %H:%M:%S'))
+        datetime_objects.append(dt.datetime.strptime(mapped_orders[rep][5], '%Y-%m-%d'))
 
     data = Fitness(best_sol,Truck(max_stops=max_stops))
     data.get_fitness()
     arrival_time = data._calculate_arrival_time(best_sol)
-    total_time = data.current_time
     area = data.area
     weight = data.weight
     stops = data.count_stops
@@ -371,13 +372,16 @@ best_population = []
 best_population_avg_fitness=[]
 genrations= []
 average_fitness = []
+
 # Run GA Button and Logic
 if st.button("Run GA"):
     if crossover_option == "Edge Crossover":
-        best_sol,best_sol_fit,best_population,best_population_avg_fitness,genrations,average_fitness = run_ga_edge_crossover(population_size, candidate_len, num_generations, crossover_rate, mutation_rate, crossover_fn, mutation_fn, selection_fn, survivor_mechanism,max_stops)
-        printData()
-        visualize_best_solution(best_sol)
+        for i in range(epochs):
+            best_sol,best_sol_fit,best_population,best_population_avg_fitness,genrations,average_fitness = run_ga_edge_crossover(population_size, candidate_len, num_generations, crossover_rate, mutation_rate, crossover_fn, mutation_fn, selection_fn, survivor_mechanism,max_stops)
+            printData()
+            visualize_best_solution(best_sol)
     else:
-        best_sol,best_sol_fit,best_population,best_population_avg_fitness,genrations,average_fitness = run_ga_order_crossover(population_size, candidate_len, num_generations, crossover_rate, mutation_rate, crossover_fn, mutation_fn, selection_fn, survivor_mechanism,max_stops)
-        printData()
-        visualize_best_solution(best_sol)
+        for i in range(epochs):
+            best_sol,best_sol_fit,best_population,best_population_avg_fitness,genrations,average_fitness = run_ga_order_crossover(population_size, candidate_len, num_generations, crossover_rate, mutation_rate, crossover_fn, mutation_fn, selection_fn, survivor_mechanism,max_stops)
+            printData()
+            visualize_best_solution(best_sol)

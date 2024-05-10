@@ -1,4 +1,7 @@
 import random
+
+random.seed(42)
+
 def swap_mutation(chromosome):
   """
   This function performs Swap Mutation on a chromosome, a common technique in Genetic Algorithms (GAs) 

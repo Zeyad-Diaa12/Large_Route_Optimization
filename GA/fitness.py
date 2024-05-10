@@ -30,6 +30,7 @@ class Fitness():
             individual (list): The individual solution representing the route.
             truck (object): The truck object with related attributes.
         """
+        
         self.genome = individual
         self.truck = truck
         self.source = self.truck.source
@@ -53,7 +54,7 @@ class Fitness():
         """
         datetime_objects = []
         for rep in self.genome:
-            datetime_objects.append(datetime.strptime(mapped_orders[rep][4], '%Y-%m-%d %H:%M:%S'))
+            datetime_objects.append(datetime.strptime(mapped_orders[rep][4], '%Y-%m-%d'))
         self.current_time = max(datetime_objects, key=lambda x: x)
 
     def _calculate_time_diff(self):
@@ -62,7 +63,7 @@ class Fitness():
         """
         datetime_objects = []
         for rep in self.genome:
-            datetime_objects.append(datetime.strptime(mapped_orders[rep][4],'%Y-%m-%d %H:%M:%S'))
+            datetime_objects.append(datetime.strptime(mapped_orders[rep][4],'%Y-%m-%d'))
         min_time = min(datetime_objects, key=lambda x:x)
         max_time = max(datetime_objects, key=lambda x:x)
         self.diff_time = (max_time - min_time).total_seconds() / 3600
@@ -73,7 +74,7 @@ class Fitness():
         arrival_time = {}
         datetime_objects = []
         for rep in chromosome:
-            datetime_objects.append(datetime.strptime(mapped_orders[rep][4], '%Y-%m-%d %H:%M:%S'))
+            datetime_objects.append(datetime.strptime(mapped_orders[rep][4], '%Y-%m-%d'))
         moving_time = max(datetime_objects, key=lambda x: x)
         total_time = moving_time
         for i in range(len(chromosome)):
@@ -119,7 +120,7 @@ class Fitness():
 
                 if self.count_stops > self.max_stops:
                     self.stops_violation += 100
-                if modified_time > datetime.strptime(mapped_orders[self.genome[i]][5],'%Y-%m-%d %H:%M:%S'):
+                if modified_time > datetime.strptime(mapped_orders[self.genome[i]][5],'%Y-%m-%d'):
                     self.time_violation += 1000
             else:
                 current_city = mapped_orders[self.genome[i]][1]
@@ -138,7 +139,7 @@ class Fitness():
 
                     if self.count_stops > self.max_stops:
                         self.stops_violation += 100
-                    if modified_time > datetime.strptime(mapped_orders[self.genome[i]][5],'%Y-%m-%d %H:%M:%S'):
+                    if modified_time > datetime.strptime(mapped_orders[self.genome[i]][5],'%Y-%m-%d'):
                         self.time_violation += 1000
 
         for rep in self.genome:
@@ -146,7 +147,7 @@ class Fitness():
             self.area += mapped_orders[rep][2]
 
         if self.weight > self.truck.truck_weight:
-            self.fitness += (self.weight - self.truck.truck_weight) * 0.6
+            self.fitness += (self.weight - self.truck.truck_weight) * 1.1
 
         if self.area > self.truck.truck_area:
             self.fitness += (self.area - self.truck.truck_area) * 0.6
