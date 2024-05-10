@@ -1,4 +1,3 @@
-from .genome import Chromosome
 from .fitness import Fitness
 from .individual import Individual
 from .truck import Truck

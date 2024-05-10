@@ -8,9 +8,10 @@ import folium
 from streamlit_folium import folium_static
 import networkx as nx
 import datetime as dt
+import pandas as pd
 
 import GA
-from GA.genome import Chromosome
+# from GA.genome import Chromosome
 from GA.fitness import Fitness
 from GA.individual import Individual
 from GA.truck import Truck
@@ -18,7 +19,7 @@ from GA.crossover import order_crossover, edge_crossover
 from GA.mutation import swap_mutation, scramble_mutation, insertion_mutation, inversion_mutation,random_resetting_mutation
 from GA.selection import tournament_selection, exponential_rank_selection
 from GA.elitism import elitism_survivor_selection
-from GA.load_data import mapped_orders
+from GA.load_data import mapped_orders,all_orders
 
 
 def run_ga_order_crossover(population_size, candidate_len, generations, crossover_rate, mutation_rate, crossover_fn, mutation_fn, selection_fn, survivor_mechanism,max_stops):
@@ -232,7 +233,7 @@ def run_ga_edge_crossover(population_size, candidate_len, generations, crossover
     return best_solution,best_solution_fitness,best_population,best_population_avg_fitness,generations,average_fitness_in_each_generation
 
 # User-defined hyperparameters (default values)
-population_size = st.sidebar.number_input("Population Size", min_value=50, max_value=1000, value=50)
+population_size = st.sidebar.number_input("Population Size", min_value=100, max_value=1000, value=100)
 mutation_rate = st.sidebar.number_input("Mutation Rate", min_value=0.0, max_value=1.0, step=0.01, value=0.1)
 crossover_rate = st.sidebar.number_input("Crossover Rate", min_value=0.0, max_value=1.0, step=0.01, value=0.8)
 num_generations = st.sidebar.number_input("Number of Generations", min_value=30, max_value=1000, value=50)
@@ -312,13 +313,60 @@ def visualize_best_solution(best_solution, main_point_city='61'):
     st.pyplot(plt)  # Display the plot in Streamlit
 
 def printData():
-    st.write(f"Population size :{len(best_population)}")
-    st.write(f"Best Average Fitness :{best_population_avg_fitness}")
-    st.write(f"Best Solution :{best_sol}")
-    st.write(f"Best Solution Fitness :{best_sol_fit}")
+    datetime_objects = []
+    for rep in best_sol:
+        datetime_objects.append(dt.datetime.strptime(mapped_orders[rep][5], '%Y-%m-%d %H:%M:%S'))
 
-# def outputTable(best_solution):
+    data = Fitness(best_sol,Truck(max_stops=max_stops))
+    data.get_fitness()
+    arrival_time = data._calculate_arrival_time(best_sol)
+    total_time = data.current_time
+    area = data.area
+    weight = data.weight
+    stops = data.count_stops
+    total_cost = data.cost_per_km
+    cities = []
+    orders = []
+    for data in best_sol:
+        cities.append(mapped_orders[data][1])
+        orders.append(mapped_orders[data][0])
+
+    route = ['61']+cities
     
+    # Create DataFrame
+    df = pd.DataFrame({
+        "Population size": [len(best_population)],
+        "Best Average Fitness": [best_population_avg_fitness],
+        "Best Solution": [best_sol],
+        "Best Solution Fitness": [best_sol_fit],
+        "Arrive Time": [total_time],
+        "Area": [area],
+        "Weight": [weight],
+        "Stops": [stops],
+        "Total Cost": [total_cost],
+        "Route": [route],
+        "Orders": [orders]
+    })
+
+    st.write(df.transpose())
+# Create an empty list to hold DataFrames
+    dfs = []
+
+# Iterate over orders and create DataFrames for each order
+    for order in orders:
+        ord = pd.DataFrame({
+            "Order": [order],
+            "Available Time": [all_orders[order]['Available_Time']],
+            "Arrival Time": [arrival_time[order]],
+            "Deadline": [all_orders[order]['Deadline']],
+            "Source": [all_orders[order]['Source']],
+            "Destination": [all_orders[order]['Destination']]
+        })
+        dfs.append(ord)
+
+# Concatenate all DataFrames into one DataFrame
+    ord_df = pd.concat(dfs, ignore_index=True)
+    st.write(ord_df)
 
 best_population = []
 best_population_avg_fitness=[]
