@@ -46,7 +46,7 @@ A project aimed at optimizing delivery routes for multiple trucks using a Geneti
 4. Visualize routes and track fitness metrics.
 
 ## UI Preview
-![UI](ui_preview.png)
+![UI](Ui.png)
 - **Graphic Interface**: Adjust parameters (A/B/C/D toggles).
 - **Fitness Tracking**: Monitor average fitness per generation.
 - **Best Solution**: Displays optimal order assignments and fitness score.
