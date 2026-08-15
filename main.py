@@ -4,8 +4,6 @@ import streamlit as st
 import plotly.graph_objs as go
 import matplotlib.pyplot as plt
 from plotly.subplots import make_subplots
-import folium
-from streamlit_folium import folium_static
 import networkx as nx
 import datetime as dt
 import pandas as pd
@@ -22,7 +20,7 @@ from GA.load_data import mapped_orders,all_orders
 
 random.seed(42)
 
-def run_ga_order_crossover(population_size, candidate_len, generations, crossover_rate, mutation_rate, crossover_fn, mutation_fn, selection_fn, survivor_mechanism,max_stops):
+def run_ga_order_crossover(population_size, candidate_len, generations, crossover_rate, mutation_rate, crossover_fn, mutation_fn, selection_fn, survivor_mechanism,max_stops,run_id=0):
     population = []
     fitness_values = []
     generation = []
@@ -61,8 +59,12 @@ def run_ga_order_crossover(population_size, candidate_len, generations, crossove
         # Create a Plotly figure
     fig = make_subplots(rows=1, cols=1)
     fig.update_layout(title="Average Fitness Across Generations", xaxis_title="Generation", yaxis_title="Average Fitness")
+    fig.add_trace(go.Scatter(x=[], y=[], mode='lines+markers', name='Average Fitness'), row=1, col=1)
 
-    chart = st.plotly_chart(fig)
+    # A placeholder keeps every redraw in the same slot, and the epoch-specific
+    # keys stop the charts of different epochs from sharing an auto-generated ID.
+    chart = st.empty()
+    chart.plotly_chart(fig, key=f"order_chart_{run_id}_init")
     start_time = dt.datetime.now()
     for gen in range(generations):
         next_generation = []
@@ -123,13 +125,14 @@ def run_ga_order_crossover(population_size, candidate_len, generations, crossove
             best_population_avg_fitness = average_fitness
         print(f"Generation {gen+1}: Average Fitness = {average_fitness}")
 
-        fig.add_trace(go.Scatter(x=generation, y=average_fitness_in_each_generation, mode='lines+markers'), row=1, col=1)
-        chart.plotly_chart(fig)
+        fig.data[0].x = generation
+        fig.data[0].y = average_fitness_in_each_generation
+        chart.plotly_chart(fig, key=f"order_chart_{run_id}_{gen}")
     st.write(f"Time taken to find best solution: {dt.datetime.now() - start_time}")
     return best_solution,best_solution_fitness,best_population,best_population_avg_fitness,generations,average_fitness_in_each_generation
 
 
-def run_ga_edge_crossover(population_size, candidate_len, generations, crossover_rate, mutation_rate, crossover_fn, mutation_fn, selection_fn, survivor_mechanism,max_stops):
+def run_ga_edge_crossover(population_size, candidate_len, generations, crossover_rate, mutation_rate, crossover_fn, mutation_fn, selection_fn, survivor_mechanism,max_stops,run_id=0):
     population = []
     fitness_values = []
     generation = []
@@ -168,8 +171,10 @@ def run_ga_edge_crossover(population_size, candidate_len, generations, crossover
     # Create a Plotly figure
     fig = make_subplots(rows=1, cols=1)
     fig.update_layout(title="Average Fitness Across Generations", xaxis_title="Generation", yaxis_title="Average Fitness")
+    fig.add_trace(go.Scatter(x=[], y=[], mode='lines+markers', name='Average Fitness'), row=1, col=1)
 
-    chart = st.plotly_chart(fig)
+    chart = st.empty()
+    chart.plotly_chart(fig, key=f"edge_chart_{run_id}_init")
 
     start_time = dt.datetime.now()
     for gen in range(generations):
@@ -228,8 +233,9 @@ def run_ga_edge_crossover(population_size, candidate_len, generations, crossover
             best_population_avg_fitness = average_fitness
         print(f"Generation {gen+1}: Average Fitness = {average_fitness}")
 
-        fig.add_trace(go.Scatter(x=generation, y=average_fitness_in_each_generation, mode='lines+markers'), row=1, col=1)
-        chart.plotly_chart(fig)
+        fig.data[0].x = generation
+        fig.data[0].y = average_fitness_in_each_generation
+        chart.plotly_chart(fig, key=f"edge_chart_{run_id}_{gen}")
     st.write(f"Time taken to find best solution: {dt.datetime.now() - start_time}")
     return best_solution,best_solution_fitness,best_population,best_population_avg_fitness,generations,average_fitness_in_each_generation
 
@@ -283,7 +289,7 @@ st.write("This interactive tool allows you to visualize delivery routes and adju
 
 # Function to visualize the best solution as connected cities with a main point city
 def visualize_best_solution(best_solution, main_point_city='61'):
-    plt.figure()
+    fig = plt.figure()
 
     # Create a directed graph
     G = nx.DiGraph()
@@ -312,9 +318,10 @@ def visualize_best_solution(best_solution, main_point_city='61'):
 
     plt.title('Best Solution')
     plt.axis('off')  # Disable axis
-    st.pyplot(plt)  # Display the plot in Streamlit
+    st.pyplot(fig)  # Display the plot in Streamlit
+    plt.close(fig)  # One figure per epoch would otherwise stay open
 
-def printData():
+def printData(run_id=0):
     datetime_objects = []
     for rep in best_sol:
         datetime_objects.append(dt.datetime.strptime(mapped_orders[rep][5], '%Y-%m-%d'))
@@ -333,40 +340,51 @@ def printData():
         orders.append(mapped_orders[data][0])
 
     route = ['61']+cities
-    
-    # Create DataFrame
-    df = pd.DataFrame({
-        "Population size": [len(best_population)],
-        "Best Average Fitness": [best_population_avg_fitness],
-        "Best Solution": [best_sol],
-        "Best Solution Fitness": [best_sol_fit],
-        "Area": [area],
-        "Weight": [weight],
-        "Stops": [stops],
-        "Total Cost": [total_cost],
-        "Route": [route],
-        "Orders": [orders]
-    })
 
-    st.write(df.transpose())
+    # Every value is rendered as text: the summary mixes numbers with lists
+    # (solution, route, orders) in a single column, which Arrow cannot type.
+    def as_text(value):
+        if isinstance(value, (list, tuple)):
+            return ", ".join(str(item) for item in value)
+        return str(value)
+
+    summary = {
+        "Population size": len(best_population),
+        "Best Average Fitness": best_population_avg_fitness,
+        "Best Solution": best_sol,
+        "Best Solution Fitness": best_sol_fit,
+        "Area": area,
+        "Weight": weight,
+        "Stops": stops,
+        "Total Cost": total_cost,
+        "Route": route,
+        "Orders": orders
+    }
+
+    df = pd.DataFrame(
+        {"Value": [as_text(value) for value in summary.values()]},
+        index=list(summary.keys())
+    )
+
+    st.dataframe(df, key=f"summary_{run_id}")
 # Create an empty list to hold DataFrames
     dfs = []
 
 # Iterate over orders and create DataFrames for each order
     for order in orders:
         ord = pd.DataFrame({
-            "Order": [order],
-            "Available Time": [all_orders[order]['Available_Time']],
-            "Moving Time": [arrival_time[order]['move']],
-            "Arrival Time": [arrival_time[order]['arrive']],
-            "Deadline": [all_orders[order]['Deadline']],
-            "Source": [all_orders[order]['Source']],
-            "Destination": [all_orders[order]['Destination']]
+            "Order": [as_text(order)],
+            "Available Time": [as_text(all_orders[order]['Available_Time'])],
+            "Moving Time": [as_text(arrival_time[order]['move'])],
+            "Arrival Time": [as_text(arrival_time[order]['arrive'])],
+            "Deadline": [as_text(all_orders[order]['Deadline'])],
+            "Source": [as_text(all_orders[order]['Source'])],
+            "Destination": [as_text(all_orders[order]['Destination'])]
         })
         dfs.append(ord)
 # Concatenate all DataFrames into one DataFrame
     ord_df = pd.concat(dfs, ignore_index=True)
-    st.write(ord_df)
+    st.dataframe(ord_df, key=f"orders_{run_id}")
 
 best_population = []
 best_population_avg_fitness=[]
@@ -377,11 +395,13 @@ average_fitness = []
 if st.button("Run GA"):
     if crossover_option == "Edge Crossover":
         for i in range(epochs):
-            best_sol,best_sol_fit,best_population,best_population_avg_fitness,genrations,average_fitness = run_ga_edge_crossover(population_size, candidate_len, num_generations, crossover_rate, mutation_rate, crossover_fn, mutation_fn, selection_fn, survivor_mechanism,max_stops)
-            printData()
+            st.subheader(f"Epoch {i+1}")
+            best_sol,best_sol_fit,best_population,best_population_avg_fitness,genrations,average_fitness = run_ga_edge_crossover(population_size, candidate_len, num_generations, crossover_rate, mutation_rate, crossover_fn, mutation_fn, selection_fn, survivor_mechanism,max_stops,run_id=i)
+            printData(run_id=i)
             visualize_best_solution(best_sol)
     else:
         for i in range(epochs):
-            best_sol,best_sol_fit,best_population,best_population_avg_fitness,genrations,average_fitness = run_ga_order_crossover(population_size, candidate_len, num_generations, crossover_rate, mutation_rate, crossover_fn, mutation_fn, selection_fn, survivor_mechanism,max_stops)
-            printData()
+            st.subheader(f"Epoch {i+1}")
+            best_sol,best_sol_fit,best_population,best_population_avg_fitness,genrations,average_fitness = run_ga_order_crossover(population_size, candidate_len, num_generations, crossover_rate, mutation_rate, crossover_fn, mutation_fn, selection_fn, survivor_mechanism,max_stops,run_id=i)
+            printData(run_id=i)
             visualize_best_solution(best_sol)
